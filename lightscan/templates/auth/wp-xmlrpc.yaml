@@ -1,0 +1,14 @@
+id: wordpress-xmlrpc
+name: WordPress XML-RPC Enabled (Brute Force / SSRF)
+severity: medium
+tags: [wordpress, xmlrpc, brute-force]
+port: 80
+protocol: http
+description: XML-RPC enables credential brute force via system.multicall and SSRF
+remediation: Disable XML-RPC via plugin or nginx rule
+steps:
+  - type: send
+    data: /xmlrpc.php
+  - type: match
+    contains: "XML-RPC server accepts POST requests only"
+    part: body

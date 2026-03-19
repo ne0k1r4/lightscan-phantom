@@ -1,0 +1,2 @@
+[console_scripts]
+lightscan = lightscan.cli:main

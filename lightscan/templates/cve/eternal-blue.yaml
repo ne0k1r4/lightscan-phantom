@@ -1,0 +1,21 @@
+id: eternalblue
+name: EternalBlue SMB RCE (MS17-010)
+severity: critical
+cve: CVE-2017-0144
+tags: [smb, rce, eternalblue, windows]
+port: 445
+protocol: tcp
+description: SMBv1 DOUBLEPULSAR/EternalBlue remote code execution
+remediation: Apply MS17-010; disable SMBv1
+reference: https://nvd.nist.gov/vuln/detail/CVE-2017-0144
+steps:
+  - type: send
+    data: "00000085ff534d4262000000008043c80000000000000000000000000000fffe00004000006200025043204e4554574f524b2050524f4752414d20312e300002"
+    encoding: hex
+  - type: match
+    regex: "\xff\x53\x4d\x42"
+  - type: send
+    data: "00000054ff534d4272000000008801284000000000000000000000000000fffe000040000c00024e54204c4d20302e313220323030320002574f524b47524f5550"
+    encoding: hex
+  - type: match
+    contains: "DOUBLEPULSAR"

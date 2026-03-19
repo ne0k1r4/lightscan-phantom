@@ -1,0 +1,14 @@
+id: nfs-world-readable
+name: NFS Share World-Readable
+severity: high
+tags: [nfs, exposure, file-share]
+port: 2049
+protocol: tcp
+description: NFS share accessible without auth — file system exposure
+remediation: Restrict exports in /etc/exports by IP range
+steps:
+  - type: send
+    data: "800000288f8b769d000000020000006100000000000000010000000000000002000186a30000000300000000"
+    encoding: hex
+  - type: match
+    regex: "\x00\x00\x00\x01"

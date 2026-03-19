@@ -1,0 +1,18 @@
+id: mongo-unauth
+name: MongoDB Unauthenticated Access
+severity: critical
+tags: [mongodb, unauth, exposure, database]
+port: 27017
+protocol: tcp
+description: MongoDB accessible without authentication
+remediation: Enable auth in mongod.conf; bind to 127.0.0.1
+reference: https://www.mongodb.com/docs/manual/security/
+steps:
+  - type: send
+    data: "3a000000000000000000000000d40700000000000061646d696e2e24636d640000000000ffffffff130000001069736d6173746572000100000000"
+    encoding: hex
+  - type: match
+    contains: "ismaster"
+  - type: extract
+    regex: "maxWireVersion.(\x02)(\x00)"
+    name: wire_version

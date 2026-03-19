@@ -1,0 +1,17 @@
+id: memcached-unauth
+name: Memcached Unauthenticated Access
+severity: high
+tags: [memcached, unauth, exposure]
+port: 11211
+protocol: tcp
+description: Memcached accessible without auth
+remediation: Bind to 127.0.0.1
+steps:
+  - type: send
+    data: "stats\r\n"
+  - type: match
+    contains: STAT version
+  - type: extract
+    regex: 'STAT version ([\d.]+)'
+    group: 1
+    name: version

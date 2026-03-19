@@ -1,0 +1,17 @@
+id: phpinfo-exposed
+name: PHP Info Page Exposed
+severity: medium
+tags: [php, exposure, info-disclosure]
+port: 80
+protocol: http
+description: phpinfo() page exposes server config
+steps:
+  - type: send
+    data: /phpinfo.php
+  - type: match
+    contains: PHP Version
+    part: body
+  - type: extract
+    regex: 'PHP Version ([\d.]+)'
+    group: 1
+    name: version

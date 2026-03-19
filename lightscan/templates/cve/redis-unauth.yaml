@@ -1,0 +1,20 @@
+id: redis-unauth
+name: Redis Unauthenticated Access
+severity: critical
+cve: CVE-2022-0543
+tags: [redis, unauth, exposure, database]
+port: 6379
+protocol: tcp
+description: Redis accessible without authentication
+remediation: Set requirepass in redis.conf
+reference: https://nvd.nist.gov/vuln/detail/CVE-2022-0543
+steps:
+  - type: send
+    data: "*1\r\n$4\r\nINFO\r\n"
+  - type: match
+    contains: redis_version
+    not_contains: NOAUTH
+  - type: extract
+    regex: 'redis_version:([\d.]+)'
+    group: 1
+    name: version

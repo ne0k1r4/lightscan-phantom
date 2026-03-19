@@ -1,0 +1,13 @@
+id: directory-listing
+name: Web Directory Listing Enabled
+severity: low
+tags: [web, directory-listing, exposure]
+port: 80
+protocol: http
+description: Apache/Nginx directory listing enabled
+steps:
+  - type: send
+    data: /
+  - type: match
+    regex: 'Index of |Directory listing for |\[DIR\]'
+    part: body

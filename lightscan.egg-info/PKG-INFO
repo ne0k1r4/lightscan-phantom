@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: lightscan
+Version: 2.0.0
+Summary: LightScan v2.0 PHANTOM — Async Network Recon & Attack Framework
+Author: Light
+Requires-Python: >=3.10
+Dynamic: author
+Dynamic: requires-python
+Dynamic: summary

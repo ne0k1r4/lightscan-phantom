@@ -1,0 +1,14 @@
+id: cassandra-unauth
+name: Cassandra Unauthenticated Access
+severity: critical
+tags: [cassandra, unauth, database, exposure]
+port: 9042
+protocol: tcp
+description: Cassandra CQL native transport accessible without authentication
+remediation: Enable authenticator in cassandra.yaml
+steps:
+  - type: send
+    data: "000400000002000000160001000d6363716c5f76657273696f6e"
+    encoding: hex
+  - type: match
+    regex: "\x84\x00"

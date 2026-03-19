@@ -1,0 +1,15 @@
+id: backup-file-exposed
+name: Backup / Config File Exposed
+severity: high
+tags: [backup, exposure, config]
+port: 80
+protocol: http
+description: Common backup file patterns accessible (config.bak, db.sql, etc.)
+steps:
+  - type: send
+    data: /config.bak
+  - type: match
+    status: [200]
+  - type: match
+    not_contains: "not found"
+    not_contains: "error"

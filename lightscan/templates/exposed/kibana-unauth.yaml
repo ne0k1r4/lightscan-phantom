@@ -1,0 +1,18 @@
+id: kibana-unauth
+name: Kibana Unauthenticated Access
+severity: high
+tags: [kibana, elasticsearch, exposure]
+port: 5601
+protocol: http
+description: Kibana accessible without authentication
+remediation: Enable X-Pack security
+steps:
+  - type: send
+    data: /api/status
+  - type: match
+    regex: '"status"'
+    part: body
+  - type: extract
+    regex: '"number":\s*"([^"]+)"'
+    group: 1
+    name: version

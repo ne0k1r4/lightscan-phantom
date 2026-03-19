@@ -1,0 +1,16 @@
+id: proxylogon
+name: Exchange ProxyLogon SSRF+RCE
+severity: critical
+cve: CVE-2021-26855
+tags: [exchange, ssrf, rce, microsoft]
+port: 443
+protocol: https
+description: Exchange Server pre-auth SSRF leading to RCE via CVE-2021-27065
+remediation: Apply March 2021 Exchange patches (KB5000871)
+reference: https://nvd.nist.gov/vuln/detail/CVE-2021-26855
+steps:
+  - type: send
+    data: /ecp/
+  - type: match
+    contains: "X-BEResource"
+    part: headers

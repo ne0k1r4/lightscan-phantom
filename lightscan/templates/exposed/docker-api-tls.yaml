@@ -1,0 +1,13 @@
+id: docker-api-tls-exposed
+name: Docker Daemon API Exposed (TLS port)
+severity: high
+tags: [docker, exposure]
+port: 2376
+protocol: https
+description: Docker TLS API exposed — may lack client cert enforcement
+steps:
+  - type: send
+    data: /version
+  - type: match
+    contains: "ApiVersion"
+    part: body

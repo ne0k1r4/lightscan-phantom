@@ -1,0 +1,16 @@
+id: log4shell
+name: Log4Shell JNDI RCE
+severity: critical
+cve: CVE-2021-44228
+tags: [log4j, jndi, rce, java]
+port: 80
+protocol: http
+description: Log4j2 JNDI injection via HTTP headers — unauthenticated RCE
+remediation: Upgrade log4j2 >= 2.17.1; set log4j2.formatMsgNoLookups=true
+reference: https://nvd.nist.gov/vuln/detail/CVE-2021-44228
+steps:
+  - type: send
+    data: /
+  - type: match
+    regex: "(apache|tomcat|java|spring|struts)"
+    part: headers

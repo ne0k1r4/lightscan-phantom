@@ -1,0 +1,17 @@
+id: proxyshell
+name: Exchange ProxyShell RCE
+severity: critical
+cve: CVE-2021-34473
+tags: [exchange, rce, proxyshell, microsoft]
+port: 443
+protocol: https
+description: Exchange Server pre-auth path confusion leading to ACL bypass and RCE
+remediation: Apply KB5004779 / August 2021 CU
+reference: https://nvd.nist.gov/vuln/detail/CVE-2021-34473
+steps:
+  - type: send
+    data: /autodiscover/autodiscover.json?@test.com/mapi/nspi/?&Email=autodiscover/autodiscover.json%3F@test.com
+  - type: match
+    status: [200, 400]
+  - type: match
+    not_contains: "404"

@@ -1,0 +1,14 @@
+id: git-repo-exposed
+name: .git Directory Exposed
+severity: high
+tags: [git, exposure, source-code]
+port: 80
+protocol: http
+description: .git directory accessible via HTTP — full source code disclosure
+remediation: Block /.git/ in webserver config; use .htaccess/nginx deny
+steps:
+  - type: send
+    data: /.git/HEAD
+  - type: match
+    contains: "ref: refs/"
+    part: body

@@ -1,0 +1,18 @@
+id: etcd-unauth
+name: etcd Unauthenticated Access
+severity: critical
+tags: [etcd, kubernetes, unauth, exposure]
+port: 2379
+protocol: http
+description: etcd accessible without auth
+remediation: Enable client certificate authentication
+steps:
+  - type: send
+    data: /version
+  - type: match
+    contains: etcdserver
+    part: body
+  - type: extract
+    regex: '"etcdserver":\s*"([^"]+)"'
+    group: 1
+    name: version

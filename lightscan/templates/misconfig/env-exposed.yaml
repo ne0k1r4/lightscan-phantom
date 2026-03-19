@@ -1,0 +1,14 @@
+id: env-file-exposed
+name: .env File Exposed
+severity: critical
+tags: [env, secrets, exposure, credentials]
+port: 80
+protocol: http
+description: .env file accessible — secrets, DB passwords, API keys exposed
+remediation: Deny access to .env in webserver; move secrets to secret manager
+steps:
+  - type: send
+    data: /.env
+  - type: match
+    regex: "(DB_|APP_KEY|SECRET|PASSWORD|TOKEN|AWS_)"
+    part: body

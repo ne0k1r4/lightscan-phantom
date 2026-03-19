@@ -1,0 +1,14 @@
+id: prometheus-unauth
+name: Prometheus Metrics Exposed
+severity: medium
+tags: [prometheus, exposure, metrics]
+port: 9090
+protocol: http
+description: Prometheus metrics endpoint accessible without authentication — system info disclosure
+remediation: Add reverse proxy with auth; use --web.listen-address=127.0.0.1
+steps:
+  - type: send
+    data: /metrics
+  - type: match
+    contains: "# HELP"
+    part: body

@@ -1,0 +1,17 @@
+id: zookeeper-unauth
+name: ZooKeeper Unauthenticated Access
+severity: high
+tags: [zookeeper, unauth, exposure]
+port: 2181
+protocol: tcp
+description: ZooKeeper four-letter command accessible without auth
+remediation: Enable SASL authentication
+steps:
+  - type: send
+    data: "mntr\n"
+  - type: match
+    contains: zk_version
+  - type: extract
+    regex: 'zk_version\s+([\d.]+)'
+    group: 1
+    name: version

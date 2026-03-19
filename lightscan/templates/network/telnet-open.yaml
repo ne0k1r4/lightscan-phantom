@@ -1,0 +1,13 @@
+id: telnet-open
+name: Telnet Service Exposed
+severity: high
+tags: [telnet, plaintext, exposure]
+port: 23
+protocol: tcp
+description: Telnet transmits credentials in cleartext
+remediation: Replace with SSH
+steps:
+  - type: send
+    data: ""
+  - type: match
+    regex: "(login:|Username:|\xff\xfd)"

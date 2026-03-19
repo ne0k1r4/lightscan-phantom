@@ -1,0 +1,13 @@
+id: cors-wildcard
+name: CORS Wildcard Misconfiguration
+severity: medium
+tags: [cors, misconfig, web]
+port: 80
+protocol: http
+description: Server returns overly permissive CORS header
+steps:
+  - type: send
+    data: /api/
+  - type: match
+    regex: 'Access-Control-Allow-Origin:\s*\*'
+    part: headers

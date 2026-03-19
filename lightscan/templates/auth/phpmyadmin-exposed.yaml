@@ -1,0 +1,17 @@
+id: phpmyadmin-exposed
+name: phpMyAdmin Exposed to Internet
+severity: high
+tags: [phpmyadmin, mysql, web, exposure]
+port: 80
+protocol: http
+description: phpMyAdmin accessible from internet
+steps:
+  - type: send
+    data: /phpmyadmin/
+  - type: match
+    contains: phpMyAdmin
+    part: body
+  - type: extract
+    regex: 'PMA_VERSION[^0-9]*([\d.]+)'
+    group: 1
+    name: version

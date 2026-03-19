@@ -1,0 +1,21 @@
+id: ftp-anonymous
+name: FTP Anonymous Login Enabled
+severity: high
+tags: [ftp, anonymous, exposure]
+port: 21
+protocol: tcp
+description: FTP server allows anonymous login — read/write access
+remediation: Disable anonymous FTP; use SFTP
+steps:
+  - type: send
+    data: ""
+  - type: match
+    regex: "220.*FTP"
+  - type: send
+    data: "USER anonymous\r\n"
+  - type: match
+    regex: "331|230"
+  - type: extract
+    regex: "220[- ](.+?)\r\n"
+    group: 1
+    name: banner

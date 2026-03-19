@@ -1,0 +1,17 @@
+id: tomcat-manager-exposed
+name: Apache Tomcat Manager Exposed
+severity: high
+tags: [tomcat, manager, default-creds]
+port: 8080
+protocol: http
+description: Tomcat Manager application accessible — enables WAR deployment = RCE
+remediation: Remove manager app or restrict to localhost
+reference: https://tomcat.apache.org/tomcat-10.0-doc/manager-howto.html
+steps:
+  - type: send
+    data: /manager/html
+  - type: match
+    status: [200, 401]
+  - type: match
+    contains: "Tomcat"
+    part: body

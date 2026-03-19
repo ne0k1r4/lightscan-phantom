@@ -1,0 +1,15 @@
+id: gitlab-open-registration
+name: GitLab Open User Registration
+severity: medium
+tags: [gitlab, registration, exposure]
+port: 80
+protocol: http
+description: GitLab allows unrestricted user registration — code exposure
+steps:
+  - type: send
+    data: /users/sign_up
+  - type: match
+    status: [200]
+  - type: match
+    contains: "New user"
+    part: body

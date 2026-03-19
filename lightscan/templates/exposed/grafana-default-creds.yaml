@@ -1,0 +1,16 @@
+id: grafana-default-creds
+name: Grafana Default Credentials (admin/admin)
+severity: high
+tags: [grafana, default-creds, auth]
+port: 3000
+protocol: http
+description: Grafana accessible with default admin/admin credentials
+remediation: Change default password immediately
+steps:
+  - type: send
+    data: /api/org
+  - type: match
+    status: [200]
+  - type: match
+    contains: "id"
+    part: body

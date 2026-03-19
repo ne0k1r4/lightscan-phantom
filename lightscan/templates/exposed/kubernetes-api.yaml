@@ -1,0 +1,15 @@
+id: kubernetes-api-exposed
+name: Kubernetes API Server Anonymous Access
+severity: critical
+tags: [kubernetes, k8s, exposure]
+port: 6443
+protocol: https
+description: K8s API server accessible without authentication
+remediation: Disable anonymous auth; enforce RBAC
+reference: https://kubernetes.io/docs/reference/access-authn-authz/authentication/
+steps:
+  - type: send
+    data: /api
+  - type: match
+    contains: "apiVersion"
+    part: body

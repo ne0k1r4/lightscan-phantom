@@ -1,0 +1,16 @@
+id: shellshock
+name: Bash ShellShock CGI RCE
+severity: critical
+cve: CVE-2014-6271
+tags: [bash, cgi, rce, shellshock]
+port: 80
+protocol: http
+description: Bash environment variable injection via CGI HTTP headers
+remediation: Upgrade bash >= 4.3 patch 25
+reference: https://nvd.nist.gov/vuln/detail/CVE-2014-6271
+steps:
+  - type: send
+    data: /cgi-bin/test.cgi
+  - type: match
+    regex: "(uid=|gid=|bash)"
+    part: body

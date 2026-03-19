@@ -1,0 +1,16 @@
+id: heartbleed
+name: OpenSSL Heartbleed Memory Leak
+severity: high
+cve: CVE-2014-0160
+tags: [ssl, tls, openssl, heartbleed]
+port: 443
+protocol: tcp
+description: OpenSSL TLS heartbeat memory disclosure up to 64KB per request
+remediation: Upgrade OpenSSL >= 1.0.1g
+reference: https://nvd.nist.gov/vuln/detail/CVE-2014-0160
+steps:
+  - type: send
+    data: "160301004f010000430301535858585858585858585858585858585858585858585858585858585858580000020035010000180000000f000d0000000e6c69676874736361" 
+    encoding: hex
+  - type: match
+    regex: "\x18\x03"

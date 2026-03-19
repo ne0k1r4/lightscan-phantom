@@ -1,0 +1,16 @@
+id: bluekeep
+name: BlueKeep RDP RCE (Pre-auth)
+severity: critical
+cve: CVE-2019-0708
+tags: [rdp, rce, bluekeep, windows]
+port: 3389
+protocol: tcp
+description: Pre-auth RCE in Windows Remote Desktop Services via use-after-free
+remediation: Apply KB4499175; disable RDP or enable NLA
+reference: https://nvd.nist.gov/vuln/detail/CVE-2019-0708
+steps:
+  - type: send
+    data: "0300001319e0000000000000436f6f6b69653a206d737473686173683d0d0a"
+    encoding: hex
+  - type: match
+    regex: "\x03\x00"

@@ -1,0 +1,19 @@
+id: docker-api-exposed
+name: Docker Daemon API Exposed
+severity: critical
+tags: [docker, exposure, rce, container]
+port: 2375
+protocol: http
+description: Unauthenticated Docker API exposed
+remediation: Bind to unix socket or enable TLS client auth
+reference: https://docs.docker.com/engine/security/protect-access/
+steps:
+  - type: send
+    data: /version
+  - type: match
+    contains: ApiVersion
+    part: body
+  - type: extract
+    regex: '"Version":\s*"([^"]+)"'
+    group: 1
+    name: version

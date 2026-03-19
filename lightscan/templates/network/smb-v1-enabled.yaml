@@ -1,0 +1,14 @@
+id: smb-v1-enabled
+name: SMBv1 Protocol Enabled
+severity: high
+tags: [smb, smbv1, windows, legacy]
+port: 445
+protocol: tcp
+description: SMBv1 deprecated and vulnerable to EternalBlue
+remediation: Run Set-SmbServerConfiguration to disable SMBv1
+steps:
+  - type: send
+    data: "0000008cff534d4262000000008043c80000000000000000000000000000fffe0000400000006e00025043204e4554574f524b2050524f4752414d20312e300002"
+    encoding: hex
+  - type: match
+    regex: '\xff\x53\x4d\x42'

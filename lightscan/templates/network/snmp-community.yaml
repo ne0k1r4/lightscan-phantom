@@ -1,0 +1,14 @@
+id: snmp-public-community
+name: SNMP Public Community String
+severity: medium
+tags: [snmp, community, network]
+port: 161
+protocol: udp
+description: SNMP v1/v2c with default public community — device info disclosure
+remediation: Upgrade to SNMPv3 with auth+encryption; change community string
+steps:
+  - type: send
+    data: "302602010004067075626c6963a01902044b6f2bc6020100020100300b300906052b06010201010500"
+    encoding: hex
+  - type: match
+    regex: "\x30.\x02\x01"

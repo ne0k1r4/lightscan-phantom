@@ -1,0 +1,18 @@
+id: elastic-unauth
+name: Elasticsearch Unauthenticated Access
+severity: critical
+tags: [elasticsearch, unauth, exposure]
+port: 9200
+protocol: http
+description: Elasticsearch accessible without authentication
+remediation: Enable X-Pack security
+steps:
+  - type: send
+    data: /
+  - type: match
+    contains: cluster_name
+    part: body
+  - type: extract
+    regex: '"number":\s*"([\d.]+)"'
+    group: 1
+    name: version

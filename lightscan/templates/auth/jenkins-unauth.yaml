@@ -1,0 +1,21 @@
+id: jenkins-unauth
+name: Jenkins Unauthenticated Access
+severity: critical
+tags: [jenkins, cicd, unauth, rce]
+port: 8080
+protocol: http
+description: Jenkins accessible without auth — script console enables OS command execution
+remediation: Enable authentication; restrict access to internal network
+steps:
+  - type: send
+    data: /
+  - type: match
+    contains: "Jenkins"
+    part: body
+  - type: send
+    data: /script
+  - type: match
+    status: [200]
+  - type: match
+    contains: "Groovy"
+    part: body
