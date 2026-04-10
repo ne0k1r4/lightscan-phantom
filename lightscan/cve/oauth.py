@@ -25,9 +25,9 @@ def _fetch(url, method="GET", data=None, headers=None, timeout=10.0):
         return e.code, body, url
     except Exception as e: return 0, str(e), url
 
-async def _afetch(*a,**k):
+async def _afetch(url, method="GET", data=None, headers=None, timeout=8.0):
     loop=asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _fetch, *a, **k)
+    return await loop.run_in_executor(None, _fetch, url, method, data, headers, timeout)
 
 async def test_open_redirect(auth_url, client_id, timeout=8.0):
     results=[]; evil="https://evil.com/callback"

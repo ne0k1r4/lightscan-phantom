@@ -29,7 +29,9 @@ try:
     from scapy.all import IP, TCP, sr1, send, RandShort, conf
     conf.verb = 0          # no per-packet output
     SCAPY_OK = True
-except ImportError:
+except (ImportError, KeyError, Exception):
+    # KeyError: 'scope' can occur in sandboxed/containerised environments
+    # where scapy's IPv6 route table fails to initialise — fall back gracefully
     SCAPY_OK = False
 
 class ScapySYNScanner:
@@ -294,8 +296,12 @@ class RawSocketSYNScanner:
     def scan(self) -> dict:
         if os.geteuid() != 0:
             print("\033[38;5;196m[!]\033[0m Raw SYN scan requires root. Falling back to connect scan.")
-            from lightscan.scan.portscan import tcp_scan, build_scan_tasks
-            results = asyncio.run(_async_connect_scan(self.target, self.ports, self.timeout))
+            from lightscan.scan.portscan import build_scan_tasks
+            import concurrent.futures
+            # Run in a dedicated thread to avoid asyncio.run() nested-loop crash
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(asyncio.run, _async_connect_scan(self.target, self.ports, self.timeout))
+                results = future.result()
             open_ports = [r.port for r in results if r and r.status == "open"]
             return {"open": open_ports, "filtered": [], "closed": []}
 

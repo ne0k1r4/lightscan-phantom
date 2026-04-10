@@ -88,9 +88,17 @@ class SYNScanner:
                 elif flags in (0x14, 0x04):   # RST-ACK or RST → CLOSED
                     with self.lock: self.closed_ports.append(port)
 
-        except ImportError:
-            raise RuntimeError("scapy required: pip install scapy")
+        except (ImportError, ModuleNotFoundError):
+            # Scapy not available — set a flag so the scanner aborts cleanly
+            with self.lock:
+                self.done += 1
+                if not hasattr(self, '_scapy_missing'):
+                    self._scapy_missing = True
+                    print("\n\033[38;5;196m[!]\033[0m scapy not found for this Python. "
+                          "Run: sudo pip install scapy --break-system-packages")
         except Exception as e:
+            with self.lock:
+                self.done += 1
             if self.verbose: print(f"\n  [!] port {port}: {e}")
 
     def _progress(self, port):
@@ -347,15 +355,27 @@ def syn_scan_c(target: str, ports: list, timeout=5) -> list:
     print(f"\033[38;5;196m[SYN-C]\033[0m Done in {elapsed:.2f}s — open={len(results)}")
     return results
 
+def _run_connect_fallback(target: str, ports: list, timeout: float) -> list:
+    """Safe connect-scan fallback — works whether or not an event loop is running."""
+    from lightscan.scan.portscan import build_scan_tasks
+    from lightscan.core.engine import PhantomEngine
+    import concurrent.futures
+    engine = PhantomEngine(concurrency=256, timeout=timeout)
+    tasks  = build_scan_tasks([target], ports, timeout)
+    # Always run in a fresh thread to avoid asyncio.run() nested-loop crash
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(asyncio.run, engine.run(tasks))
+        return future.result()
+
+
 def syn_scan_auto(target: str, ports: list, timeout=2.0, threads=100, verbose=False, prefer_c=False) -> list:
-    """Auto-pick best SYN method: C > Scapy > connect fallback"""
+    """Auto-pick best SYN method: C > Scapy > connect fallback.
+    Fixed: fallback now uses a dedicated thread so asyncio.run() never
+    gets called inside an already-running event loop.
+    """
     if os.geteuid() != 0:
         print("\033[38;5;240m[!] Not root — SYN scan unavailable, falling back to connect scan\033[0m")
-        from lightscan.scan.portscan import build_scan_tasks
-        from lightscan.core.engine import PhantomEngine
-        engine = PhantomEngine(concurrency=256, timeout=timeout)
-        tasks  = build_scan_tasks([target], ports, timeout)
-        return engine.run_sync(tasks)
+        return _run_connect_fallback(target, ports, timeout)
 
     try:
         if prefer_c:
@@ -364,8 +384,4 @@ def syn_scan_auto(target: str, ports: list, timeout=2.0, threads=100, verbose=Fa
             return SYNScanner(target, ports, timeout, threads, verbose).scan()
     except Exception as e:
         print(f"\033[38;5;240m[!] SYN mode failed ({e}) — falling back to connect scan\033[0m")
-        from lightscan.scan.portscan import build_scan_tasks
-        from lightscan.core.engine import PhantomEngine
-        engine = PhantomEngine(concurrency=256, timeout=timeout)
-        tasks  = build_scan_tasks([target], ports, timeout)
-        return engine.run_sync(tasks)
+        return _run_connect_fallback(target, ports, timeout)

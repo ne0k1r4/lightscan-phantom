@@ -63,29 +63,11 @@ async def run_all_checks(host: str, open_ports: list[int],
 
     # ── Legacy hardcoded checks ───────────────────────────────────────────────
     if use_legacy:
-        checker = CVEChecker(host, timeout=timeout)
-        port_set = set(open_ports)
-
-        tasks = []
-        if 445 in port_set:
-            tasks.append(checker.check_eternalblue())
-        if 80 in port_set or 8080 in port_set or 443 in port_set:
-            tasks.append(checker.check_log4shell(log4shell_callback))
-            tasks.append(checker.check_spring4shell())
-            tasks.append(checker.check_shellshock())
-        if 443 in port_set or 8443 in port_set:
-            tasks.append(checker.check_heartbleed())
-        if 6379 in port_set:
-            tasks.append(checker.check_redis_unauth())
-        if 27017 in port_set:
-            tasks.append(checker.check_mongodb_unauth())
-        if 9200 in port_set:
-            tasks.append(checker.check_elasticsearch_unauth())
-
-        legacy_results = await asyncio.gather(*tasks)
-        for batch in legacy_results:
-            for r in (batch if isinstance(batch, list) else [batch]):
-                if r and _dedup(r): results.append(r)
+        checker = CVEChecker(timeout=timeout)
+        # check_all() takes host + ports and dispatches to the right functions
+        legacy_results = await checker.check_all(host, ports=open_ports)
+        for r in legacy_results:
+            if r and _dedup(r): results.append(r)
 
     return results
 

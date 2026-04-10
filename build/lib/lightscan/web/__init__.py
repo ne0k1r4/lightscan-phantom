@@ -1,0 +1,1 @@
+"""LightScan Web Scanner module"""

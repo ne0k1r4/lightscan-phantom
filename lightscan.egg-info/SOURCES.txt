@@ -30,10 +30,15 @@ lightscan/evasion/__init__.py
 lightscan/scan/__init__.py
 lightscan/scan/diff.py
 lightscan/scan/dns.py
+lightscan/scan/evasion.py
+lightscan/scan/ipv6scan.py
 lightscan/scan/os_detect.py
+lightscan/scan/osdb.py
 lightscan/scan/portscan.py
+lightscan/scan/rawscan.py
 lightscan/scan/syn.py
 lightscan/scan/syn_scanner.py
 lightscan/scan/traceroute.py
+lightscan/scan/udp.py
 lightscan/web/__init__.py
 lightscan/web/scanner.py
