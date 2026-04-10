@@ -43,6 +43,18 @@ def build_parser():
     tg.add_argument("--syn",         action="store_true", help="SYN half-open scan (requires root + scapy)")
     tg.add_argument("--syn-c",       action="store_true", help="SYN scan using compiled C binary (fastest, root+gcc)")
     tg.add_argument("--threads",     type=int, default=100, help="SYN scanner threads (default:100)")
+    tg.add_argument("--raw",         action="store_true", help="Raw async SYN scan (root, epoll, nmap speed)")
+    tg.add_argument("-T","--timing",  type=str, default="T4", metavar="T0-T5", help="Timing template: T0(paranoid) to T5(insane) [default: T4]")
+    tg.add_argument("--ttl",         type=int, default=64,  help="IP TTL for raw scans (default: 64)")
+    tg.add_argument("--decoy",       type=int, default=0,   metavar="N", help="Send N random decoy IPs alongside probes")
+    tg.add_argument("--fragment",    action="store_true",   help="Fragment IP packets (IDS evasion)")
+    tg.add_argument("--source-port", type=int, default=0,   metavar="PORT", help="Fix source port (e.g. 53 for firewall bypass)")
+    tg.add_argument("--randomize",   action="store_true", default=True, help="Randomise port scan order (default: on)")
+    tg.add_argument("--no-randomize",action="store_true",   help="Disable port order randomisation")
+    tg.add_argument("-6","--ipv6",   action="store_true",   help="IPv6 scan (dual-stack resolution)")
+    tg.add_argument("--ipv6-only",   action="store_true",   help="Scan IPv6 addresses only")
+    tg.add_argument("--dual-stack",  action="store_true",   help="Scan both IPv4 and IPv6 addresses")
+    tg.add_argument("--os-v2",       action="store_true",   help="Use improved OS fingerprint database (120+ signatures)")
 
     # Modules
     m = p.add_argument_group("Modules")
@@ -254,6 +266,78 @@ async def async_main(args):
                     open_ports.setdefault(res.target, []).append(res.port)
                     print(f"  \033[38;5;196mOPEN\033[0m  {res.target}:{res.port:<6} {res.detail}")
         all_results.extend(syn_results)
+
+    # ── UDP Scan (dedicated module with ICMP classification)
+    if args.udp and args.target:
+        from lightscan.scan.udp import udp_scan
+        udp_ports_default = [53, 67, 68, 69, 111, 123, 137, 161, 162,
+                             389, 500, 514, 520, 1900, 4500, 5353, 5060]
+        ports = parse_ports(args.ports) if args.ports else udp_ports_default
+        hosts = parse_targets(args.target)
+        udp_results = []
+        for host in hosts:
+            r = udp_scan(host, ports, args.timeout,
+                         getattr(args, 'threads', 50), args.verbose)
+            udp_results.extend(r)
+        for res in udp_results:
+            colour = "\033[38;5;196m" if res.status == "open" else "\033[38;5;240m"
+            print(f"  {colour}{res.status.upper():<13}\033[0m  "
+                  f"{res.target}:{res.port:<6} {res.detail}")
+        all_results.extend(udp_results)
+
+    # ── Raw async SYN scan (epoll, nmap speed)
+    if getattr(args, 'raw', False) and args.target:
+        from lightscan.scan.rawscan import async_raw_scan
+        from lightscan.scan.evasion import parse_timing
+        hosts  = parse_targets(args.target)
+        ports  = parse_ports(args.ports)
+        timing = parse_timing(getattr(args, 'timing', 'T4'))
+        ttl    = getattr(args, 'ttl', 64)
+        decoys = getattr(args, 'decoy', 0)
+        frag   = getattr(args, 'fragment', False)
+        rand   = not getattr(args, 'no_randomize', False)
+        ipv6   = getattr(args, 'ipv6', False)
+        print(f"\033[38;5;196m[RAW-SCAN]\033[0m {len(hosts)} host(s) × {len(ports)} ports | "
+              f"T{timing} | ttl={ttl} | decoys={decoys} | frag={frag}")
+        for host in hosts:
+            r = await async_raw_scan(host, ports, timing=timing, ttl=ttl,
+                                     decoys=decoys, fragment=frag, randomize=rand,
+                                     grab_banner=True, verbose=args.verbose, ipv6=ipv6)
+            all_results.extend(r)
+            for res in r:
+                if res.status == "open":
+                    open_ports.setdefault(res.target, []).append(res.port)
+                    print(f"  \033[38;5;196mOPEN\033[0m  {res.target}:{res.port:<6} {res.detail}")
+
+    # ── IPv6 scan
+    if getattr(args, 'ipv6', False) and args.target and not getattr(args, 'raw', False):
+        from lightscan.scan.ipv6scan import scan_ipv6, dual_stack_scan
+        hosts = parse_targets(args.target)
+        ports = parse_ports(args.ports)
+        for host in hosts:
+            if getattr(args, 'dual_stack', False):
+                r = await dual_stack_scan(host, ports, args.timeout,
+                                          args.concurrency, verbose=args.verbose)
+            else:
+                r = await scan_ipv6(host, ports, args.timeout,
+                                    args.concurrency, verbose=args.verbose)
+            all_results.extend(r)
+            for res in r:
+                if res.status == "open":
+                    open_ports.setdefault(res.target, []).append(res.port)
+                    print(f"  \033[38;5;196mOPEN\033[0m  {res.target}:{res.port:<6} {res.detail}")
+
+    # ── OS fingerprint v2
+    if getattr(args, 'os_v2', False) and args.target:
+        from lightscan.scan.osdb import probe_os
+        hosts = parse_targets(args.target)
+        print(f"\033[38;5;196m[OS-V2]\033[0m Fingerprinting {len(hosts)} host(s)")
+        for host in hosts:
+            port = list(open_ports.get(host, [0]))[0] if open_ports.get(host) else 0
+            r = await probe_os(host, port, args.timeout)
+            all_results.extend(r)
+            for res in r:
+                print(f"  \033[38;5;196m[OS]\033[0m {res.target} → {res.detail}")
 
     # ── Port Scan
     if args.scan and args.target:
