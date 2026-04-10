@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+.env/
+
+# Runtime files
+.lightscan_cp.json
+*.log
+

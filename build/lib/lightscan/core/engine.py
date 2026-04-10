@@ -61,4 +61,15 @@ class PhantomEngine:
         print(f"\033[38;5;240m[+] Done: {len(self._results)} results · {len(self._errors)} errors · {elapsed:.2f}s\033[0m")
         return self._results
 
-    def run_sync(self, tasks): return asyncio.run(self.run(tasks))
+    def run_sync(self, tasks):
+        try:
+            loop = asyncio.get_running_loop()
+            # Already inside a running event loop (e.g. Jupyter / nested call)
+            # Schedule as a task and block via run_until_complete on a new thread
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(asyncio.run, self.run(tasks))
+                return future.result()
+        except RuntimeError:
+            # No running loop — safe to use asyncio.run()
+            return asyncio.run(self.run(tasks))

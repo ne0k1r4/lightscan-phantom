@@ -125,22 +125,36 @@ _CLIENT_HELLO = (
 _HEARTBEAT = b"\x18\x03\x02\x00\x03\x01\xfa\x00"
 
 async def check_heartbleed(host, port=443, timeout=8.0):
-    try:
+    """Fixed: avoid nested wait_for CancelledError propagation (Python 3.11+ bug)."""
+    async def _inner():
         r, w = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=timeout)
-        w.write(_CLIENT_HELLO); await w.drain()
-        hello_resp = await asyncio.wait_for(r.read(4096), timeout=timeout)
-        if len(hello_resp) < 5: w.close(); return ScanResult("cve-heartbleed",host,port,"not_tls",Severity.INFO,"Not TLS")
-        w.write(_HEARTBEAT); await w.drain()
-        try: resp = await asyncio.wait_for(r.read(65535), timeout=3.0)
-        except asyncio.TimeoutError: resp=b""
-        w.close()
-        if len(resp) > 3 and resp[0] == 0x18:
-            return ScanResult("cve-heartbleed",host,port,"VULNERABLE",Severity.CRITICAL,
-                f"Heartbleed: server LEAKED {len(resp)} bytes of memory!",
-                {"cve":"CVE-2014-0160","leaked_bytes":len(resp)})
-        return ScanResult("cve-heartbleed",host,port,"not_vuln",Severity.INFO,"Heartbleed: not vulnerable")
+        try:
+            w.write(_CLIENT_HELLO); await w.drain()
+            try:
+                hello_resp = await asyncio.wait_for(r.read(4096), timeout=timeout)
+            except asyncio.TimeoutError:
+                return ScanResult("cve-heartbleed", host, port, "timeout", Severity.INFO, "TLS hello timeout")
+            if len(hello_resp) < 5:
+                return ScanResult("cve-heartbleed", host, port, "not_tls", Severity.INFO, "Not TLS")
+            w.write(_HEARTBEAT); await w.drain()
+            # asyncio.shield prevents outer cancellation from killing this inner read,
+            # avoiding CancelledError mishandling on Python 3.11+
+            try:
+                resp = await asyncio.wait_for(asyncio.shield(r.read(65535)), timeout=min(3.0, timeout))
+            except asyncio.TimeoutError:
+                resp = b""
+            if len(resp) > 3 and resp[0] == 0x18:
+                return ScanResult("cve-heartbleed", host, port, "VULNERABLE", Severity.CRITICAL,
+                    f"Heartbleed: server LEAKED {len(resp)} bytes of memory!",
+                    {"cve": "CVE-2014-0160", "leaked_bytes": len(resp)})
+            return ScanResult("cve-heartbleed", host, port, "not_vuln", Severity.INFO, "Heartbleed: not vulnerable")
+        finally:
+            try: w.close(); await w.wait_closed()
+            except Exception: pass
+    try:
+        return await _inner()
     except Exception as e:
-        return ScanResult("cve-heartbleed",host,port,"error",Severity.INFO,str(e))
+        return ScanResult("cve-heartbleed", host, port, "error", Severity.INFO, str(e))
 
 
 # ─── ShellShock CVE-2014-6271 ────────────────────────────────────────────────

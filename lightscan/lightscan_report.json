@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "target": "scanme.nmap.org",
+    "timestamp": 1775967872.7078607,
+    "duration": 9.797855615615845,
+    "command": "/home/LIGHT/.local/bin/lightscan --target scanme.nmap.org --scan --sv --ports 22,80,443"
+  },
+  "results": [
+    {
+      "module": "sV",
+      "target": "scanme.nmap.org",
+      "port": 22,
+      "status": "open",
+      "severity": "HIGH",
+      "detail": "OpenSSH 6.6.1p1 (Ubuntu)",
+      "data": {
+        "service": "SSH",
+        "product": "OpenSSH",
+        "version": "6.6.1p1",
+        "extra": "Ubuntu",
+        "confidence": 95,
+        "tls": false,
+        "banner": "SSH-2.0-OpenSSH_6.6.1p1 Ubuntu-2ubuntu2.13\r\n"
+      },
+      "timestamp": 1775967879.5034692
+    },
+    {
+      "module": "sV",
+      "target": "scanme.nmap.org",
+      "port": 80,
+      "status": "open",
+      "severity": "INFO",
+      "detail": "HTTP",
+      "data": {
+        "service": "HTTP",
+        "product": "HTTP",
+        "version": "",
+        "extra": "",
+        "confidence": 30,
+        "tls": false,
+        "banner": "HTTP/1.0 200 OK\r\nPragma: no-cache\r\nCache-Control: no-cache\r\nContent-Length: 262\r\nContent-Type: text/"
+      },
+      "timestamp": 1775967876.5811927
+    }
+  ]
+}

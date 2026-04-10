@@ -55,6 +55,24 @@ def build_parser():
     tg.add_argument("--ipv6-only",   action="store_true",   help="Scan IPv6 addresses only")
     tg.add_argument("--dual-stack",  action="store_true",   help="Scan both IPv4 and IPv6 addresses")
     tg.add_argument("--os-v2",       action="store_true",   help="Use improved OS fingerprint database (120+ signatures)")
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> fca4cf4 (Initial LightScan Phantom commit)
+    tg.add_argument("--packet-scan",  action="store_true",  help="AF_PACKET half-open SYN scan (Linux root, open/closed/filtered/firewall)")
+    tg.add_argument("--stealth-scan", action="store_true",  help="IDS-evasion mode: T1 timing + jitter + sport randomisation (implies --packet-scan)")
+    tg.add_argument("--spoof-sport",  type=int, default=0, metavar="PORT", help="Spoof source port (e.g. 53 or 80) to bypass port-based ACLs")
+    tg.add_argument("--sv",          action="store_true",   help="Service version detection (nmap -sV equivalent)")
+    tg.add_argument("--script",      nargs="+", metavar="SCRIPT", help="Run NSE-style scripts (e.g. http_headers tls_cert_info)")
+    tg.add_argument("--script-tags", nargs="+", metavar="TAG",    help="Run all scripts with matching tags (e.g. http safe)")
+    tg.add_argument("--list-scripts",action="store_true",   help="List all available scripts")
+    tg.add_argument("--passive",     action="store_true",   help="Passive fingerprinting (TLS/JA3S, HTTP headers, SSH entropy)")
+    tg.add_argument("--adaptive",    action="store_true", default=True, help="Adaptive timing (auto-adjusts rate based on RTT/loss)")
+<<<<<<< HEAD
+>>>>>>> fca4cf4 (Initial LightScan Phantom commit)
+=======
+>>>>>>> fca4cf4 (Initial LightScan Phantom commit)
 
     # Modules
     m = p.add_argument_group("Modules")
@@ -339,6 +357,90 @@ async def async_main(args):
             for res in r:
                 print(f"  \033[38;5;196m[OS]\033[0m {res.target} → {res.detail}")
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> fca4cf4 (Initial LightScan Phantom commit)
+    # ── AF_PACKET / stealth scan
+    _do_packet = getattr(args, 'packet_scan', False) or getattr(args, 'stealth_scan', False)
+    if _do_packet and args.target:
+        from lightscan.scan.packetscan import async_packet_scan
+        from lightscan.scan.evasion import parse_timing
+        hosts       = parse_targets(args.target)
+        ports       = parse_ports(args.ports)
+        timing      = parse_timing(getattr(args, 'timing', 'T4'))
+        stealth     = getattr(args, 'stealth_scan', False)
+        spoof_sport = getattr(args, 'spoof_sport', 0)
+        for host in hosts:
+            r = await async_packet_scan(
+                host, ports, timing=timing,
+                ttl=getattr(args, 'ttl', 64),
+                grab_banner=True, verbose=args.verbose,
+                stealth=stealth, spoof_sport=spoof_sport)
+            all_results.extend(r)
+            for res in r:
+                if res.status == "open":
+                    open_ports.setdefault(res.target, []).append(res.port)
+                    print(f"  \033[38;5;196mOPEN\033[0m     {res.target}:{res.port:<6} {res.detail}")
+                elif res.status == "firewall":
+                    print(f"  \033[38;5;208mFIREWALL\033[0m {res.target}:{res.port:<6} {res.detail}")
+
+    # ── Script engine
+    if getattr(args, 'list_scripts', False):
+        from lightscan.scan.scripts import ScriptRegistry, install_builtin_scripts
+        script_base = install_builtin_scripts()
+        registry    = ScriptRegistry([script_base])
+        print(f"\033[38;5;196m[SCRIPTS]\033[0m {len(registry)} scripts available\n")
+        for s in registry.list_all():
+            print(f"  {s['name']:<30} [{', '.join(s['tags'][:3])}]  ports={s['ports'][:4]}")
+            if s['desc']: print(f"    {s['desc']}")
+        return all_results
+
+    if (getattr(args, 'script', None) or getattr(args, 'script_tags', None)) and args.target:
+        from lightscan.scan.scripts import run_scripts, install_builtin_scripts
+        hosts       = parse_targets(args.target)
+        script_base = install_builtin_scripts()
+        for host in hosts:
+            ports = open_ports.get(host, parse_ports(args.ports))
+            r = await run_scripts(
+                host, ports,
+                script_dirs=[script_base],
+                names=getattr(args, 'script', None),
+                tags=getattr(args, 'script_tags', None),
+                timeout=args.timeout, verbose=args.verbose)
+            all_results.extend(r)
+
+    # ── Service version detection (-sV)
+    if getattr(args, 'sv', False) and args.target:
+        from lightscan.scan.sversion import detect_services
+        hosts = parse_targets(args.target)
+        print(f"\033[38;5;196m[sV]\033[0m Service version detection | {len(hosts)} host(s)")
+        for host in hosts:
+            ports = open_ports.get(host, parse_ports(args.ports))
+            if not ports: continue
+            r = await detect_services(host, ports, args.timeout, verbose=args.verbose)
+            all_results.extend(r)
+            for res in r:
+                print(f"  \033[38;5;196m[{res.port}]\033[0m {res.detail}")
+
+    # ── Passive fingerprinting
+    if getattr(args, 'passive', False) and args.target:
+        from lightscan.scan.passive import passive_fingerprint
+        hosts = parse_targets(args.target)
+        print(f"\033[38;5;196m[PASSIVE]\033[0m Passive fingerprinting | {len(hosts)} host(s)")
+        for host in hosts:
+            ports = open_ports.get(host, parse_ports(args.ports))
+            if not ports: continue
+            r = await passive_fingerprint(host, ports, args.timeout)
+            all_results.extend(r)
+            for res in r:
+                print(f"  \033[38;5;196m[{res.module}]\033[0m {res.detail}")
+
+<<<<<<< HEAD
+>>>>>>> fca4cf4 (Initial LightScan Phantom commit)
+=======
+>>>>>>> fca4cf4 (Initial LightScan Phantom commit)
     # ── Port Scan
     if args.scan and args.target:
         hosts=parse_targets(args.target); ports=parse_ports(args.ports)
